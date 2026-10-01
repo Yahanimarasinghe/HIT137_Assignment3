@@ -1,21 +1,17 @@
-# HIT137_Assignment3
-
 # HIT137 Assignment 3 – Image Puzzle
 
 ## Group Description
 
-This project is a desktop-based image puzzle developed for HIT137 Assignment 3.
-The application uses Python, Tkinter, OpenCV and Pillow to provide an interactive
-image puzzle with multiple grid sizes, tile transformations, hints and solving
-functionality.
+This project is a desktop-based image puzzle developed for HIT137 Assignment 3.  
+The application uses Python, Tkinter, OpenCV and Pillow to provide an interactive image puzzle with multiple grid sizes, tile transformations, hints and solving functionality.
 
 ## Group Members
 
 | Student ID | Name | GitHub Username |
-
-| s406952 | Yahani Evmini Marasinghe Marasinghe Mudiyanselage | Yahanimarasinghe |
+|---|---|---|
+| s406952 | Yahani Evmini Marasinghe Marasinge Mudiyanselage | Yahanimarasinghe |
 | s403063 | Abhinav Neupane | abhinavneupane |
-| s397914 | Bilal Maqbool | Bilal Maqbool |
+| s397914 | Bilal Maqbool | bilalmaqboolj-spec |
 
 ## Project Features
 
@@ -31,3 +27,4 @@ functionality.
 - Automatic puzzle solving
 - Error handling for invalid image files
 - Object-oriented programming design
+
