@@ -1,0 +1,79 @@
+# HIT-137
+#Groupd Assigmnet 3
+#Part 1 Object - Oriented Programming
+#Student = Bilal Maqbool
+
+
+class Tile:
+    def__init__(self, tile_id, correct_position):
+        self._tile_id=tile_id
+        self._correct_position = correct_position
+        
+    def transform(self):
+        print(f"{self._tile_id} transformed.")
+        
+    def get_correct_position(self):
+        return self._correct_position
+    
+    def set_correct_position(self, new_position):
+        self._correct_position=new_position
+        
+    def display (self):
+        print (f"Tile ID: {self._tile_id}, correct_position:{self._correct_position}")
+        
+class RotatedTitle(Title):
+    def__init__(self, tile_id, correct_position, angle):
+            super().__init__(title_id, correct_position )
+            self._angle=angle
+        
+    def transform(self):
+            print)f'Tile {self._tile_id} rotated b {self._angle} degrees.'
+            
+class FlippedTile(Tile):
+    def __init__(self, tile_id, position, flip_type):
+         super().__init__(tile.id, position)
+         self.flip_type = flip_type
+    def transform(self):
+         print(f'Tile {self.tile_id} fillped {self._flip_type}.')
+         
+class SwappedTile (Tile):
+    def __init__(self, tile_id, correct_position, swap_with):
+        super().__init__(tile_id, correct_position)
+        self._swap_with=swap_with
+        
+    def transform(self):
+         print(f'Tile {self.tile_id} swapped with Tile {self._swap_with}.')
+         
+class Puzzle:
+    
+    def __init__(self):
+         self._tile = []
+         
+    def add.tile(self,tile):
+        self._tiles.append(tile)
+        
+    def show_titles(self):
+        print('\Puzzle Titles')
+        for tile in self.tiles:
+            tile.display()
+            
+        
+    def apply_transformations(self):
+        print('\nApplying Transformations')
+        for tile in self._tiles:
+            tile.transform()
+            
+            
+def main():
+    puzzle = Puzzle()
+    tile1=RotatedTile(1,(0,0), 90)
+    tile2=FlippedTile(2, (0,1), 'Horizontal')
+    tile3=SwppedTile(3, (1,0), 4)
+    
+    puzzle.add_title(title1)
+    puzzle.add_title(title2)
+    puzzle.add_title(title3)
+    
+    puzzle.show_titles()
+    puzzle.apply_transformations()
+main()
