@@ -62,29 +62,25 @@ class Transformation(ABC):
 # =============================================================
 
 class SwapTransformation(Transformation):
-    """Swaps the target tile with another randomly selected tile."""
+    """Swaps the target tile with another tile."""
 
-    def apply(self, puzzle, target_index=None):
+    def apply(self, puzzle, target_index=None, partner_index=None):
 
         if len(puzzle.tiles) < 2:
             return
 
         if target_index is None:
-            first = random.randrange(
-                len(puzzle.tiles)
-            )
+            first = random.randrange(len(puzzle.tiles))
         else:
             first = target_index
 
-        possible_second = [
-            i
-            for i in range(len(puzzle.tiles))
-            if i != first
-        ]
-
-        second = random.choice(
-            possible_second
-        )
+        if partner_index is None:
+            # No partner given: pick any other tile.
+            second = random.choice(
+                [i for i in range(len(puzzle.tiles)) if i != first]
+            )
+        else:
+            second = partner_index
 
         puzzle.swap_tiles(
             first,
@@ -197,12 +193,12 @@ class Puzzle:
 
         self.tiles = []
 
-        self.moves = 0
-        self.hints_used = 0
-        self.solved = False
+        self._moves = 0
+        self._hints_used = 0
+        self._solved = False
 
         # Stores transformations so Solve can reverse them.
-        self.history = []
+        self._history = []
 
         # Create PuzzleTile objects.
         for position, image in enumerate(tiles):
@@ -250,7 +246,7 @@ class Puzzle:
         )
 
         if record_history:
-            self.history.append(
+            self._history.append(
                 (
                     "swap",
                     first,
@@ -259,7 +255,7 @@ class Puzzle:
             )
 
         if count_move:
-            self.moves += 1
+            self._moves += 1
 
     # =========================================================
     # ROTATE TILE
@@ -326,7 +322,7 @@ class Puzzle:
                 360 - angle
             ) % 360
 
-            self.history.append(
+            self._history.append(
                 (
                     "rotate",
                     index,
@@ -335,7 +331,7 @@ class Puzzle:
             )
 
         if count_move:
-            self.moves += 1
+            self._moves += 1
 
     # =========================================================
     # FLIP TILE
@@ -390,7 +386,7 @@ class Puzzle:
 
         if record_history:
 
-            self.history.append(
+            self._history.append(
                 (
                     "flip",
                     index,
@@ -399,7 +395,7 @@ class Puzzle:
             )
 
         if count_move:
-            self.moves += 1
+            self._moves += 1
 
     # =========================================================
     # SCRAMBLE
@@ -414,8 +410,8 @@ class Puzzle:
             4x4 -> 12
             5x5 -> 20
 
-        Each physical puzzle tile is selected as a primary
-        transformation target at most once.
+        Each physical puzzle tile is used by at most one
+        transformation.
 
         The three transformation types are:
             - Swap
@@ -444,74 +440,61 @@ class Puzzle:
                 "scramble transformations."
             )
 
-        # -----------------------------------------------------
-        # Create transformation objects.
-        #
-        # These classes demonstrate polymorphism because
-        # each object implements apply() differently.
-        # -----------------------------------------------------
+        # A swap uses two tiles and the others use one, so the number
+        # of swaps is limited to the tiles left over. This guarantees
+        # that no tile is ever used by two different transformations.
+        max_swaps = len(self.tiles) - count
 
-        transformations = [
-            SwapTransformation(),
-            RotateTransformation(),
-            FlipTransformation()
-        ]
-
-        # -----------------------------------------------------
-        # Make sure all three transformation types are used.
-        #
-        # The remaining transformations are chosen randomly.
-        # -----------------------------------------------------
-
+        # One of each type first, then random types for the rest.
         plan = [
             SwapTransformation(),
             RotateTransformation(),
             FlipTransformation()
         ]
 
-        remaining = count - len(plan)
+        swaps = 1
 
-        for _ in range(remaining):
-            plan.append(
-                random.choice(
-                    transformations
-                )
-            )
+        while len(plan) < count:
 
-        # Randomise the order of all transformations.
+            choices = [RotateTransformation, FlipTransformation]
+
+            if swaps < max_swaps:
+                choices.append(SwapTransformation)
+
+            chosen = random.choice(choices)
+
+            if chosen is SwapTransformation:
+                swaps += 1
+
+            plan.append(chosen())
+
         random.shuffle(plan)
 
-        # -----------------------------------------------------
-        # Select unique PHYSICAL tiles.
-        #
-        # Tile objects are selected first, rather than positions.
-        # This means a tile cannot become the primary target
-        # twice, even if a previous swap moves it.
-        # -----------------------------------------------------
+        # Unused tiles are taken from a shuffled pool (physical tile
+        # objects, so swaps cannot cause a tile to be picked twice).
+        pool = random.sample(self.tiles, len(self.tiles))
 
-        target_tiles = random.sample(
-            self.tiles,
-            count
-        )
+        for transformation in plan:
 
-        # -----------------------------------------------------
-        # Apply each transformation to its unique target tile.
-        # -----------------------------------------------------
+            if isinstance(transformation, SwapTransformation):
 
-        for transformation, target_tile in zip(
-            plan,
-            target_tiles
-        ):
+                tile_a = pool.pop()
+                tile_b = pool.pop()
 
-            # Find the target tile's CURRENT position.
-            target_index = self.tiles.index(
-                target_tile
-            )
+                transformation.apply(
+                    self,
+                    self.tiles.index(tile_a),
+                    self.tiles.index(tile_b)
+                )
 
-            transformation.apply(
-                self,
-                target_index
-            )
+            else:
+
+                tile = pool.pop()
+
+                transformation.apply(
+                    self,
+                    self.tiles.index(tile)
+                )
 
     # =========================================================
     # GET INCORRECT TILE COUNT
@@ -573,7 +556,7 @@ class Puzzle:
 
         # Reverse every recorded action.
         for action in reversed(
-            self.history
+            self._history
         ):
 
             action_type = action[0]
@@ -626,10 +609,64 @@ class Puzzle:
                 )
 
         # Clear history after solving.
-        self.history.clear()
+        self._history.clear()
 
         # Reset move counter.
-        self.moves = 0
+        self._moves = 0
 
         # Mark puzzle as solved.
-        self.solved = True
+        self._solved = True
+
+    # =========================================================
+    # READ-ONLY INFORMATION (encapsulation)
+    # =========================================================
+
+    MAX_HINTS = 3
+
+    @property
+    def moves(self):
+        """Number of moves made by the player."""
+        return self._moves
+
+    @property
+    def hints_used(self):
+        """Number of hints used on this image."""
+        return self._hints_used
+
+    @property
+    def solved(self):
+        """True once the puzzle has been solved by Solve."""
+        return self._solved
+
+    def hints_left(self):
+        return self.MAX_HINTS - self._hints_used
+
+    # =========================================================
+    # HINT
+    # =========================================================
+
+    def get_hint(self):
+        """
+        Pick one incorrect tile and use up one hint.
+
+        Returns (current position, home position), or None if
+        no hint is available.
+        """
+
+        if self._hints_used >= self.MAX_HINTS:
+            return None
+
+        wrong = [
+            position
+            for position, tile in enumerate(self.tiles)
+            if not tile.is_correct(position)
+        ]
+
+        if not wrong:
+            return None
+
+        position = random.choice(wrong)
+
+        self._hints_used += 1
+
+        return position, self.tiles[position].correct_position
