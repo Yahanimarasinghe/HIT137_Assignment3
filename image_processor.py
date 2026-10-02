@@ -22,12 +22,7 @@ class ImageProcessor:
         if not file_path:
             raise ValueError("No image file was selected.")
 
-        # imdecode also works with non-English characters in the path
-        try:
-            image = cv2.imdecode(np.fromfile(file_path, dtype=np.uint8),
-                                 cv2.IMREAD_COLOR)
-        except OSError:
-            image = None
+        image = cv2.imread(file_path)
 
         if image is None:
             raise ValueError(
